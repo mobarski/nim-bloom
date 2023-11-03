@@ -17,10 +17,10 @@ import std/strformat
 import std/hashes
 
 type BloomFilter = object
-    k : int
-    m : int
-    data : seq[byte]
-    salt : seq[int]
+    k* : int
+    m* : int
+    data* : seq[byte]
+    salt* : seq[int]
 
 proc new_bloom_filter*(k, m: int): BloomFilter =
     ## Create a new Bloom filter with k hash functions and m bits
@@ -102,9 +102,9 @@ proc bloom_norm*(self: BloomFilter, text:string, i=0): float =
     let h = self.hash(text, i)
     return h / high(int)
 
-# === SANDBOX ===
+# === TESTS ===
 
-if true:
+proc test1(): void =
     var x = new_bloom_filter(3, 30)
     echo x
     x.add("hello")
@@ -119,3 +119,6 @@ if true:
     echo bloom_optimal_k(30, 2)
     echo bloom_optimal_m(2, 0.01)
     echo x.bloom_norm("hello")
+
+if is_main_module:
+    test1()
