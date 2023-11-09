@@ -16,17 +16,28 @@ from std/math import pow, exp, ln, round
 import std/strformat
 import std/hashes
 
+import std/streams
+import std/marshal as mr
+
 type BloomFilter = object
     k* : int
     m* : int
     data* : seq[byte]
     salt* : seq[int]
 
+
 proc new_bloom_filter*(k, m: int): BloomFilter =
     ## Create a new Bloom filter with k hash functions and m bits
     result = BloomFilter(k: k, m: m, data: newSeq[byte](m div 8 + 1), salt: newSeq[int](k))
     for i in 0 ..< k:
         result.salt[i] = i
+
+proc store*(self: BloomFilter, s:Stream) =
+    mr.store(s, self)
+
+proc load_bloom_filter*(s:Stream): BloomFilter =
+    mr.load(s, result)
+
 
 proc hash(self: BloomFilter, text:string, i:int=0): int =
     ## Hash text with i-th hash function
@@ -104,7 +115,7 @@ proc bloom_norm*(self: BloomFilter, text:string, i=0): float =
 
 # === TESTS ===
 
-proc test1(): void =
+proc test1() =
     var x = new_bloom_filter(3, 30)
     echo x
     x.add("hello")
@@ -120,5 +131,18 @@ proc test1(): void =
     echo bloom_optimal_m(2, 0.01)
     echo x.bloom_norm("hello")
 
+proc test2() = 
+    var x = new_bloom_filter(3, 30)
+    x.add("hello")
+    x.add("world")
+    echo "ECHO: ", x
+    let fo = new_file_stream("tmp.bloom", fmWrite)
+    x.store(fo)
+    close(fo)
+    let fi = new_file_stream("tmp.bloom", fmRead)
+    let y = load_bloom_filter(fi)
+    close(fi)
+    echo "LOAD OUTPUT: ", y
+
 if is_main_module:
-    test1()
+    test2()
