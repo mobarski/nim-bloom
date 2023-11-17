@@ -35,7 +35,6 @@ proc hash(self: BloomFilter, text:string, i:int=0): int =
     when false:
         let salt = self.salt[i]
         let val = "{salt}|{text}|{salt}".fmt
-        # TODO: use mixing (!&) and finishing (!$)
         return val.hash # TODO: crc32 or other well known hash
     else:
         var h : Hash = self.salt[i].hash
