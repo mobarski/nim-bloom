@@ -32,9 +32,15 @@ proc new_bloom_filter*(k, m: int): BloomFilter =
 
 proc hash(self: BloomFilter, text:string, i:int=0): int =
     ## Hash text with i-th hash function
-    let salt = self.salt[i]
-    let val = "{salt}|{text}|{salt}".fmt
-    return val.hash # TODO: crc32 or other well known hash
+    when false:
+        let salt = self.salt[i]
+        let val = "{salt}|{text}|{salt}".fmt
+        # TODO: use mixing (!&) and finishing (!$)
+        return val.hash # TODO: crc32 or other well known hash
+    else:
+        var h : Hash = self.salt[i].hash
+        h = h !& text.hash
+        result = abs(!$h)
 
 proc mark(self: var BloomFilter, pos:int) =
     ## Mark the bit at position pos
@@ -73,6 +79,7 @@ proc randomize_salts*(self: var BloomFilter, seed=0) =
     for i in 0 ..< self.k:
         self.salt[i] = rand(high(int))
 
+# TODO: self.k vs salts.len
 proc set_salts*(self: var BloomFilter, salts:seq[int]) =
     ## Set the salts
     for i in 0 ..< self.k:
@@ -99,10 +106,13 @@ proc bloom_optimal_m*(n:int, error:float): int =
         if e <= error:
             return m
 
+# TODO: remove
+#[
 proc bloom_norm*(self: BloomFilter, text:string, i=0): float =
     ## Calculate the i-th hash value and normalize it to [0,1)
     let h = self.hash(text, i)
     return h / high(int)
+]#
 
 # === TESTS ===
 
@@ -120,7 +130,6 @@ proc test1() =
     echo bloom_error(3, 30, 1)
     echo bloom_optimal_k(30, 2)
     echo bloom_optimal_m(2, 0.01)
-    echo x.bloom_norm("hello")
 
 if is_main_module:
     test1()
